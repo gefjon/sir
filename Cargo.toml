@@ -6,3 +6,4 @@ authors = ["Arthur Goldman <arthur@goldman-tribe.org>"]
 [dependencies]
 gnuplot = "*"
 num = "*"
+clap = "*"

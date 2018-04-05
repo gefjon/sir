@@ -1,30 +1,42 @@
+extern crate clap;
 extern crate gnuplot;
 extern crate num;
 
 const X_LABEL: &str = "Time elapsed (days)";
 const Y_LABEL: &str = "Number of people";
 const TITLE: &str = "Write a title for this graph";
-const TOTAL_POP: SirNumeric = 10.0;
-const INFECTED: SirNumeric = 1.0;
-const BETA: SirNumeric = 0.5;
-const GAMMA: SirNumeric = 0.5;
-const NUMBER_OF_DAYS: SirInteger = 10;
 
 const SUSCEPTIBLE_CAPTION: &str = "Number susceptible";
 const INFECTED_CAPTION: &str = "Number infected";
 const REMOVED_CAPTION: &str = "Number removed";
 
-const OUTFILE: &str = "sir-out";
-
 use gnuplot::{AxesCommon, Figure, PlotOption};
 use std::{fs::File, io::prelude::*};
 
-mod calculations;
-use calculations::{SirInteger, SirIterator, SirNumeric, SirStep};
+pub mod calculations;
+mod cli;
+use calculations::{SirIterator, SirStep};
 
 fn main() {
-    let data: Vec<SirStep> =
-        SirIterator::from_total_pop(BETA, GAMMA, TOTAL_POP, INFECTED, NUMBER_OF_DAYS).collect();
+    let cli::Args {
+        beta,
+        gamma,
+        infected,
+        n_days,
+        filename,
+        total_pop,
+        susceptible,
+    } = cli::parse_args();
+
+    let data = if let Some(total_pop) = total_pop {
+        SirIterator::from_total_pop(beta, gamma, total_pop, infected, n_days)
+    } else if let Some(susceptible) = susceptible {
+        SirIterator::from_susceptible(beta, gamma, susceptible, infected, n_days)
+    } else {
+        panic!("Neither total-pop nor susceptible was supplied!")
+    };
+
+    let data: Vec<SirStep> = data.collect();
 
     let mut fg = Figure::new();
 
@@ -59,9 +71,9 @@ fn main() {
                 PlotOption::Color("black"),
             ],
         );
-    fg.set_terminal("png", &format!("{}.png", OUTFILE)).show();
+    fg.set_terminal("png", &format!("{}.png", filename)).show();
 
-    let mut f = File::create(format!("{}.csv", OUTFILE)).unwrap();
+    let mut f = File::create(format!("{}.csv", filename)).unwrap();
     for info in data {
         writeln!(
             f,
