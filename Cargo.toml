@@ -1,0 +1,8 @@
+[package]
+name = "sir"
+version = "0.1.0"
+authors = ["Arthur Goldman <arthur@goldman-tribe.org>"]
+
+[dependencies]
+gnuplot = "*"
+num = "*"
