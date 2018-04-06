@@ -1,6 +1,7 @@
 [package]
 name = "sir"
 version = "0.1.0"
+license = "MIT"
 authors = ["Arthur Goldman <arthur@goldman-tribe.org>"]
 
 [dependencies]
