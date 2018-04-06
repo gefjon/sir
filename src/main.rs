@@ -2,19 +2,11 @@ extern crate clap;
 extern crate gnuplot;
 extern crate num;
 
-const X_LABEL: &str = "Time elapsed (days)";
-const Y_LABEL: &str = "Number of people";
-const TITLE: &str = "Write a title for this graph";
-
-const SUSCEPTIBLE_CAPTION: &str = "Number susceptible";
-const INFECTED_CAPTION: &str = "Number infected";
-const REMOVED_CAPTION: &str = "Number removed";
-
-use gnuplot::{AxesCommon, Figure, PlotOption};
-use std::{fs::File, io::prelude::*};
+use std::{fs::File, io::prelude::*, path::Path};
 
 pub mod calculations;
 mod cli;
+mod graphing;
 use calculations::{SirIterator, SirStep};
 
 fn main() {
@@ -26,6 +18,8 @@ fn main() {
         filename,
         total_pop,
         susceptible,
+        csv,
+        terminals,
     } = cli::parse_args();
 
     let data = if let Some(total_pop) = total_pop {
@@ -37,43 +31,16 @@ fn main() {
     };
 
     let data: Vec<SirStep> = data.collect();
+    
+    if csv {
+        write_csv(&data, &filename);
+    }
+    
+    graphing::graph_all(&data, &filename, &terminals);
+}
 
-    let mut fg = Figure::new();
-
-    fg.axes2d()
-        .set_x_label(X_LABEL, &[])
-        .set_y_label(Y_LABEL, &[])
-        .set_title(TITLE, &[])
-        .lines(
-            data.iter().map(|i| i.day),
-            data.iter().map(|i| i.susceptible),
-            &[
-                PlotOption::PointSymbol('.'),
-                PlotOption::Caption(SUSCEPTIBLE_CAPTION),
-                PlotOption::Color("green"),
-            ],
-        )
-        .lines(
-            data.iter().map(|i| i.day),
-            data.iter().map(|i| i.infected),
-            &[
-                PlotOption::PointSymbol('x'),
-                PlotOption::Caption(INFECTED_CAPTION),
-                PlotOption::Color("red"),
-            ],
-        )
-        .lines(
-            data.iter().map(|i| i.day),
-            data.iter().map(|i| i.removed),
-            &[
-                PlotOption::PointSymbol('+'),
-                PlotOption::Caption(REMOVED_CAPTION),
-                PlotOption::Color("black"),
-            ],
-        );
-    fg.set_terminal("png", &format!("{}.png", filename)).show();
-
-    let mut f = File::create(format!("{}.csv", filename)).unwrap();
+fn write_csv(data: &[SirStep], filename: &Path) {
+    let mut f = File::create(&filename.with_extension("csv")).unwrap();
     for info in data {
         writeln!(
             f,

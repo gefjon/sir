@@ -1,5 +1,6 @@
 use calculations::{SirInteger, SirNumeric};
-use clap::{App, Arg};
+use clap::{App, Arg, ArgGroup};
+use std::path::PathBuf;
 
 pub struct Args {
     pub beta: SirNumeric,
@@ -8,7 +9,9 @@ pub struct Args {
     pub infected: SirNumeric,
     pub total_pop: Option<SirNumeric>,
     pub n_days: SirInteger,
-    pub filename: String,
+    pub filename: PathBuf,
+    pub csv: bool,
+    pub terminals: Vec<String>,
 }
 
 pub fn parse_args() -> Args {
@@ -54,13 +57,30 @@ pub fn parse_args() -> Args {
              .value_name("T")
              .default_value("100")
              .help("Number of days to simulate"))
-        .arg(Arg::with_name("filename")
-             .short("f")
-             .long("filename")
-             .value_name("FILE")
+        .arg(Arg::with_name("output")
+             .short("o")
+             .long("output")
+             .value_name("FILENAME")
              .default_value("sir-out")
              .help("Filename to output")
              .long_help("Output filename. A path without extension; <FILE>.png and <FiLE>.csv will both be written. Overwrites if file exists."))
+        .arg(Arg::with_name("csv")
+             .short("c")
+             .long("csv")
+             .help("Produce <FILE>.png"))
+        .arg(Arg::with_name("no-csv")
+             .short("C")
+             .long("no-csv")
+             .help("Do not produce <FILE>.png"))
+        .group(ArgGroup::with_name("should-produce-csv")
+               .args(&["csv", "no-csv"]))
+        .arg(Arg::with_name("terminals")
+             .min_values(0)
+             .long("terminals")
+             .value_names(&["TERM"])
+             .default_value("png")
+             .help("Gnuplot terminals to output")
+             .long_help("A list of Gnuplot terminals to output."))
         .get_matches();
 
     Args {
@@ -68,8 +88,10 @@ pub fn parse_args() -> Args {
         gamma: args.value_of("gamma").unwrap().parse().unwrap(),
         infected: args.value_of("infected").unwrap().parse().unwrap(),
         n_days: args.value_of("day-count").unwrap().parse().unwrap(),
-        filename: args.value_of("filename").unwrap().into(),
+        filename: args.value_of("output").unwrap().into(),
         total_pop: args.value_of("total-pop").map(|s| s.parse().unwrap()),
         susceptible: args.value_of("susceptible").map(|s| s.parse().unwrap()),
+        csv: !args.is_present("no-csv"),
+        terminals: args.values_of("terminals").map(|i| i.map(|s| s.into()).collect()).unwrap_or_else(|| vec!("png".into())),
     }
 }
