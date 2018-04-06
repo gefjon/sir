@@ -5,13 +5,13 @@ use std::{
     ffi::OsStr,
 };
 
-const X_LABEL: &str = "Time elapsed (days)";
-const Y_LABEL: &str = "Number of people";
-const TITLE: &str = "Write a title for this graph";
+const X_LABEL: &str = "Tid (dagar)";
+const Y_LABEL: &str = "Antal personer";
 
-const SUSCEPTIBLE_CAPTION: &str = "Number susceptible";
-const INFECTED_CAPTION: &str = "Number infected";
-const REMOVED_CAPTION: &str = "Number removed";
+const SUSCEPTIBLE_CAPTION: &str = "Antal mottagliga";
+const INFECTED_CAPTION: &str = "Antal smittade";
+const REMOVED_CAPTION: &str = "Antal borträknade";
+const TOTAL_CASES_CAPTION: &str = "Antal fall";
 
 pub fn make_figure(data: &[SirStep]) -> Figure {
     let mut fg = Figure::new();
@@ -19,14 +19,13 @@ pub fn make_figure(data: &[SirStep]) -> Figure {
     fg.axes2d()
         .set_x_label(X_LABEL, &[])
         .set_y_label(Y_LABEL, &[])
-        .set_title(TITLE, &[])
         .lines(
             data.iter().map(|i| i.day),
             data.iter().map(|i| i.susceptible),
             &[
                 PlotOption::PointSymbol('.'),
                 PlotOption::Caption(SUSCEPTIBLE_CAPTION),
-                PlotOption::Color("green"),
+                PlotOption::Color("black"),
             ],
         )
         .lines(
@@ -35,7 +34,7 @@ pub fn make_figure(data: &[SirStep]) -> Figure {
             &[
                 PlotOption::PointSymbol('x'),
                 PlotOption::Caption(INFECTED_CAPTION),
-                PlotOption::Color("red"),
+                PlotOption::Color("blue"),
             ],
         )
         .lines(
@@ -44,7 +43,15 @@ pub fn make_figure(data: &[SirStep]) -> Figure {
             &[
                 PlotOption::PointSymbol('+'),
                 PlotOption::Caption(REMOVED_CAPTION),
-                PlotOption::Color("black"),
+                PlotOption::Color("green"),
+            ],
+        )
+        .lines(
+            data.iter().map(|i| i.day),
+            data.iter().map(|i| i.infected + i.removed),
+            &[
+                PlotOption::Caption(TOTAL_CASES_CAPTION),
+                PlotOption::Color("red"),
             ],
         );
 
